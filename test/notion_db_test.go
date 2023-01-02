@@ -3,28 +3,30 @@
 package test
 
 import (
-	log "github.com/sirupsen/logrus"
 	"testing"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 
-	"github.com/christopherliew/travel-buddy-bot/config"
-	"github.com/christopherliew/travel-buddy-bot/internal/notion"
+	"tele-notion-bot/config"
+	"tele-notion-bot/logging"
+	"tele-notion-bot/notion"
 )
 
-var Cfg *viper.Viper
+var cfg *viper.Viper
+var logger *zap.Logger
 
 func init() {
-	// Set up configs for testing
-	config.LoadConfig()
-	Cfg = config.GetConfig()
+	cfg = config.GetConfig()
+	logger = logging.GetLogger()
 }
 
 func TestGetNotionDatabase(t *testing.T) {
 
 	res := notion.GetDatabase(
-		Cfg.GetString("NOTION_TEST_DB_ID"),
-		Cfg.GetString("NOTION_INTEGRATION_SECRET"),
+		cfg.GetString("NOTION.TEST_DB_ID"),
+		cfg.GetString("NOTION.INTEGRATION_SECRET"),
+		logger,
 	)
 
 	if res.RequestStatus != 0 { // Change to cover more error codes
@@ -35,24 +37,26 @@ func TestGetNotionDatabase(t *testing.T) {
 func TestGetNotionDatabaseWrongSecret(t *testing.T) {
 
 	res := notion.GetDatabase(
-		Cfg.GetString("NOTION_TEST_DB_ID"),
-		Cfg.GetString("NOTION_INTEGRATION_SECRET")+"_wrong",
+		cfg.GetString("NOTION.TEST_DB_ID"),
+		cfg.GetString("NOTION.INTEGRATION_SECRET")+"_wrong",
+		logger,
 	)
 
 	if res.RequestStatus != 401 { // Change to cover more error codes
-		t.Error("Request did not return 401 Token Invalid Error")
+		t.Errorf("Request did not return 401 Token Invalid Error")
 	}
 
-	log.Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
+	logger.Sugar().Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
 }
 
 func TestQueryDatabase(t *testing.T) {
 
 	query := `{"page_size": 100, "sorts": ["property": "Date", "direction": "ascending"}]}`
 	res := notion.QueryDatabase(
-		Cfg.GetString("NOTION_TEST_DB_ID"),
+		cfg.GetString("NOTION.TEST_DB_ID"),
 		query,
-		Cfg.GetString("NOTION_INTEGRATION_SECRET"),
+		cfg.GetString("NOTION.INTEGRATION_SECRET"),
+		logger,
 	)
 
 	if res.RequestStatus != 0 { // Change to cover more error codes
@@ -64,16 +68,17 @@ func TestQueryDatabaseWrongSecret(t *testing.T) {
 
 	query := `{"page_size": 100, "sorts": ["property": "Date", "direction": "ascending"}]}`
 	res := notion.QueryDatabase(
-		Cfg.GetString("NOTION_TEST_DB_ID"),
+		cfg.GetString("NOTION.TEST_DB_ID"),
 		query,
-		Cfg.GetString("NOTION_INTEGRATION_SECRET")+"_wrong",
+		cfg.GetString("NOTION.INTEGRATION_SECRET")+"_wrong",
+		logger,
 	)
 
 	if res.RequestStatus != 401 {
 		t.Error("Request did not return 401 Token Invalid Error")
 	}
 
-	log.Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
+	logger.Sugar().Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
 }
 
 // func TestUpdateDatabase(t *testing.T)
