@@ -2,6 +2,4 @@
 
 ## Introduction
 
-## Usage
-
-## Tech Stack & Design
+`Work in Progress` Telegram bot that enables users to access and update Notion objects like `Pages`, `Databases` and `Blocks`.

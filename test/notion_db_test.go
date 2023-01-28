@@ -15,10 +15,12 @@ import (
 
 var cfg *viper.Viper
 var logger *zap.Logger
+var slogger *zap.SugaredLogger
 
 func init() {
 	cfg = config.GetConfig()
 	logger = logging.GetLogger()
+	slogger = logger.Sugar()
 }
 
 func TestGetNotionDatabase(t *testing.T) {
@@ -46,7 +48,6 @@ func TestGetNotionDatabaseWrongSecret(t *testing.T) {
 		t.Errorf("Request did not return 401 Token Invalid Error")
 	}
 
-	logger.Sugar().Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
 }
 
 func TestQueryDatabase(t *testing.T) {
@@ -78,7 +79,6 @@ func TestQueryDatabaseWrongSecret(t *testing.T) {
 		t.Error("Request did not return 401 Token Invalid Error")
 	}
 
-	logger.Sugar().Infof("Error with code: %d and message %s", res.RequestStatus, res.RequestMessage)
 }
 
 // func TestUpdateDatabase(t *testing.T)
