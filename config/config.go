@@ -12,11 +12,11 @@ var config *viper.Viper
 func init() {
 
 	config = viper.New()
-	config.SetConfigName("config")    // name of config file (without extension)
-	config.SetConfigType("yml")       // REQUIRED if the config file does not have the extension in the name
-	config.AddConfigPath("./config")  // optionally look for config in the working directory
+	config.SetConfigName("config")
+	config.SetConfigType("yaml")
 	config.AddConfigPath(".")         // optionally look for config in the working directory
-	config.AddConfigPath("../config") // optionally look at parent dir then config
+	config.AddConfigPath("./config")  // optionally look for config in the working directory
+	config.AddConfigPath("../config") // optionally look at parent dir then config (for testing)
 	config.AutomaticEnv()             // auto read env variables
 
 	err := config.ReadInConfig() // Find and read the config file

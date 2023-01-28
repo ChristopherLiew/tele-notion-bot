@@ -1,44 +1,70 @@
 package main
 
-// 1) Authenticate Pages + login on Notion (Public Integration)
-// 2) Select Options by Page type DB, Pages, Users, Blocks, Comments
-// 3) Perform operations on them
-// 4) Render them in Telegram
-
 import (
-	"log"
 	"tele-notion-bot/config"
 	"tele-notion-bot/logging"
-	"tele-notion-bot/notion"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func main() {
-	// Set up configs and logging
-	cfg := config.GetConfig()
+var TeleNotionBotCommands []tgbotapi.BotCommand
 
+func init() {
+	// bot commands
+	TeleNotionBotCommands = []tgbotapi.BotCommand{
+		{
+			Command:     "start",
+			Description: "Connect with or Update your Notion Account connection",
+		},
+		{
+			Command:     "search",
+			Description: "Search for Pages and Databases on Notion",
+		},
+		{
+			Command:     "help",
+			Description: "At your service",
+		},
+		{
+			Command:     "end",
+			Description: "Stop chatting with moi~",
+		},
+	}
+}
+
+func main() {
+
+	// general configs
+	cfg := config.GetConfig()
 	logger := logging.GetLogger()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	// Instantiate Bot
-	sugar.Infof("Starting %s", cfg.GetString("TELEGRAM.BOT_NAME"))
-	bot, err := tgbotapi.NewBotAPI(cfg.GetString("TELEGRAM.BOT_TOKEN"))
+	// instantiate bot
+	sugar.Infof("Starting %s", cfg.GetString("TELEGRAM.TEST_BOT_NAME"))
+	bot, err := tgbotapi.NewBotAPI(cfg.GetString("TELEGRAM.TEST_BOT_TOKEN"))
 	if err != nil {
-		log.Panic(err)
+		sugar.Fatalw(err.Error())
 	}
-	bot.Debug = true
+	bot.Debug = false
 
+	// bot configs
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
 	updates := bot.GetUpdatesChan(updateConfig)
 
-	// Let's go through each update that we're getting from Telegram.
-	for update := range updates {
+	botCommands := tgbotapi.NewSetMyCommands(TeleNotionBotCommands...)
+	resp, err := bot.Request(botCommands)
+	if err != nil {
+		sugar.Fatalw(err.Error())
+	}
+	sugar.Infof("Bot commands have been set with response: %b", resp.Ok)
 
-		if update.Message != nil {
-			notion.HandleNotionRequest(update, bot, sugar)
+	// process updates
+	for update := range updates {
+		if update.Message.IsCommand() {
+			BotUpdateHandler(update, bot, cfg, sugar)
+		} else {
+			continue
 		}
 	}
 }

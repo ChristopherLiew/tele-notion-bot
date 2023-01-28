@@ -82,7 +82,7 @@ func GetDatabase(databaseID string, notionIntToken string, logger *zap.Logger) (
 }
 
 // QueryDatabase pulls all data found in a given database based on a user defined query
-func QueryDatabase(databaseId string, query string, notionIntToken string, logger *zap.Logger) (output DatabaseQuery) {
+func QueryDatabase(databaseId string, query string, notionIntToken string, logger *zap.Logger) (output DatabaseResponse) {
 
 	sugar := logger.Sugar()
 	var inputQuery = []byte(query)

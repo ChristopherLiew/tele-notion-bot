@@ -1,0 +1,15 @@
+TELEGRAM:
+  BOT_NAME: "NotionBot"
+  BOT_USERNAME: "tele_notion_bot"
+  BOT_TOKEN: "5800858899:AAEXlziwb3rdz_EFUBPB3xPfn3S5wKFghx0"
+  TEST_BOT_NAME: "TestNotionBot"
+  TEST_BOT_USERNAME: "test_tele_notion_bot"
+  TEST_BOT_TOKEN: "5894822568:AAFWRwYzzE0njUAxJvj9Lcr-Wa-jOwVREoA"
+
+# Change to Public Integration in the future
+NOTION:
+  API_VERSION: "2022-06-28"
+  API_ROOT: "https://api.notion.com/v1" # Internal Integration
+  INTEGRATION_SECRET: "secret_E9VmBfr8fF8hUr7LcAbz2grgAv0ri0lGPyOLitQLFF2"
+  TEST_PAGE_ID: "2301bc16d18d4341b37489b3f9a5eb0e"
+  TEST_DB_ID: "36cb45ade2954938af542afa20b00af7"
