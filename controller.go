@@ -6,14 +6,13 @@ package main
 import (
 	"fmt"
 	"os"
-	"tele-notion-bot/utils"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
-func BotUpdateHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
+func botUpdateHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
 
 	switch update.Message.Command() {
 	case "start":
@@ -44,15 +43,21 @@ func startCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *
 
 func searchCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
 
+	getPagesQuery := "pages"
+	getDBQuery := "databases"
+
 	searchCommandKeyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Get Pages 📝", "get-pages"),
+			tgbotapi.InlineKeyboardButton{
+				Text:                         "Get Pages 📝",
+				SwitchInlineQueryCurrentChat: &getPagesQuery,
+			},
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Get Databases 💾", "get-databases"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Search for a specific Page 🔦", "get-specific-page"),
+			tgbotapi.InlineKeyboardButton{
+				Text:                         "Get Databases 💾",
+				SwitchInlineQueryCurrentChat: &getDBQuery,
+			},
 		),
 	)
 
@@ -69,11 +74,11 @@ func searchCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *vip
 	if err != nil {
 		slogger.Error(err.Error())
 	}
-	latestResp, hasResp := utils.Last(latestUpdates)
+	latestResp, hasResp := Last(latestUpdates)
 
 	// Handle search related callbacks
 	if hasResp {
-		handleSearchCallback(latestResp, bot, cfg, slogger)
+		handleSearchQuery(latestResp, bot, cfg, slogger)
 	} else {
 		slogger.Fatalw("Unable to obtain latest response from user!")
 	}

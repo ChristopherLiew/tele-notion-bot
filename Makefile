@@ -1,5 +1,7 @@
-.PHONY: test
-.PHONY: fmt
+.PHONY: test build run all
+
+fmt:
+	gofmt -s -w .
 
 test:
 	go test -v ./test
@@ -9,11 +11,8 @@ test_coverage:
 	go tool cover -html ./test/coverage.out -o ./test/coverage.html
 	open ./test/coverage.html
 
-fmt:
-	gofmt -s -w .
-
 build:
-	go build -o bin/main main.go
+	go build -o ./bin/main && ./bin/main
 
 compile:
 	echo "Compiling for every OS and Platform"
@@ -30,12 +29,13 @@ dep:
 vet:
 	go vet
 
+clean:
+	rm -rf bin
+	rm -rf ./test/coverage.*
+
 all:
+	make clean
 	make fmt
 	make vet
 	make test
 	make build
-
-clean:
-	rm -rf bin
-	rm -rf ./test/coverage.*

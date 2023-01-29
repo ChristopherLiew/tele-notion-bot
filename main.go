@@ -1,3 +1,6 @@
+// REFACTOR UPDATES cannot be nested since it conflict with the main instance
+// Revert back to UPDATE TYPE
+
 package main
 
 import (
@@ -62,7 +65,7 @@ func main() {
 	// process updates
 	for update := range updates {
 		if update.Message.IsCommand() {
-			BotUpdateHandler(update, bot, cfg, sugar)
+			botUpdateHandler(update, bot, cfg, sugar)
 		} else {
 			continue
 		}

@@ -1,4 +1,4 @@
-package utils
+package main
 
 func Last[E any](s []E) (E, bool) {
 	if len(s) == 0 {

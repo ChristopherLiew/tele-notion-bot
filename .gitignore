@@ -19,3 +19,6 @@ test/data
 
 # Secrets & Configs
 config/config.yaml
+
+# Binaries
+bin/*

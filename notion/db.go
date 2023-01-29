@@ -1,3 +1,5 @@
+// Refactor to standardise with Search
+
 package notion
 
 import (
@@ -10,20 +12,17 @@ import (
 	"go.uber.org/zap"
 )
 
-const ApiRoot = "https://api.notion.com/v1"
-const NotionVer = "2022-06-28"
-
 // CreateDatabase creates a new Notion database on a given page within a given workspace
-func CreateDatabase(notionIntToken string, logger *zap.Logger) (output DatabaseObject) {
+func CreateDatabase(notionSecret string, logger *zap.Logger) (output DatabaseObject) {
 
 	sugar := logger.Sugar()
 	url := fmt.Sprintf("%s/databases", ApiRoot)
 	req, _ := http.NewRequest("POST", url, nil)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", NotionVer)
+	req.Header.Add("Notion-Version", ApiVersion)
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("authorization", notionIntToken)
+	req.Header.Add("authorization", notionSecret)
 
 	res, _ := http.DefaultClient.Do(req)
 
@@ -47,15 +46,15 @@ func CreateDatabase(notionIntToken string, logger *zap.Logger) (output DatabaseO
 }
 
 // GetDatabase retrives a given database's metadata and properties
-func GetDatabase(databaseID string, notionIntToken string, logger *zap.Logger) (output DatabaseObject) {
+func GetDatabase(databaseID string, notionSecret string, logger *zap.Logger) (output DatabaseObject) {
 
 	sugar := logger.Sugar()
 	url := fmt.Sprintf("%s/databases/%s", ApiRoot, databaseID)
 	req, _ := http.NewRequest("GET", url, nil)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", NotionVer)
-	req.Header.Add("authorization", notionIntToken)
+	req.Header.Add("Notion-Version", ApiVersion)
+	req.Header.Add("authorization", notionSecret)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -82,7 +81,7 @@ func GetDatabase(databaseID string, notionIntToken string, logger *zap.Logger) (
 }
 
 // QueryDatabase pulls all data found in a given database based on a user defined query
-func QueryDatabase(databaseId string, query string, notionIntToken string, logger *zap.Logger) (output DatabaseResponse) {
+func QueryDatabase(databaseId string, query string, notionSecret string, logger *zap.Logger) (output DatabaseResponse) {
 
 	sugar := logger.Sugar()
 	var inputQuery = []byte(query)
@@ -90,8 +89,8 @@ func QueryDatabase(databaseId string, query string, notionIntToken string, logge
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(inputQuery))
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", NotionVer)
-	req.Header.Add("authorization", notionIntToken)
+	req.Header.Add("Notion-Version", ApiVersion)
+	req.Header.Add("authorization", notionSecret)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -117,7 +116,7 @@ func QueryDatabase(databaseId string, query string, notionIntToken string, logge
 }
 
 // UpdateDatabase updates an existing database given a user defined update query
-func UpdateDatabase(databaseId string, update string, notionIntToken string, logger *zap.Logger) (output DatabaseObject) {
+func UpdateDatabase(databaseId string, update string, notionSecret string, logger *zap.Logger) (output DatabaseObject) {
 
 	sugar := logger.Sugar()
 	var updateQuery = []byte(update)
@@ -125,9 +124,9 @@ func UpdateDatabase(databaseId string, update string, notionIntToken string, log
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(updateQuery))
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", NotionVer)
+	req.Header.Add("Notion-Version", ApiVersion)
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("authorization", notionIntToken)
+	req.Header.Add("authorization", notionSecret)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

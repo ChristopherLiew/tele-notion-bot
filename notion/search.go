@@ -8,33 +8,15 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"tele-notion-bot/config"
 
 	"go.uber.org/zap"
 )
 
-var apiRoot string
-var apiVersion string
+// GetAllPages retrieves all notion pages and returns a PageSearchResponse which mirrors the search api endpoint's response body.
+func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor *string, pageSize int) (*PageSearchResponse, error) {
 
-func init() {
-	cfg := config.GetConfig()
-	apiRoot = cfg.GetString("NOTION.API_ROOT")
-	apiVersion = cfg.GetString("NOTION.API_VERSION")
-}
-
-func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor string, pageSize int) (*PageSearchResponse, error) {
-
-	// Convert this to string params and remove structs
-	var searchParams *SearchParams
-	var startCursorValue *string
-
-	if startCursor == "" {
-		startCursorValue = nil
-	} else {
-		startCursorValue = &startCursor
-	}
-
-	searchParams = &SearchParams{
+	// Use struct to handle nullable fields (e.g. start cursor)
+	searchParams := &SearchParams{
 		Sort: &SearchSortObject{
 			Direction: "descending",
 			Timestamp: "last_edited_time",
@@ -43,7 +25,7 @@ func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor 
 			Value:    "page",
 			Property: "object",
 		},
-		StartCursor: startCursorValue,
+		StartCursor: startCursor,
 		PageSize:    int32(pageSize),
 	}
 
@@ -52,12 +34,12 @@ func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor 
 		slogger.Errorw(err.Error())
 	}
 
-	url := fmt.Sprintf("%s/search", apiRoot)
+	url := fmt.Sprintf("%s/search", ApiRoot)
 	payload := strings.NewReader(string(params))
 	req, _ := http.NewRequest("POST", url, payload)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", apiVersion)
+	req.Header.Add("Notion-Version", ApiVersion)
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("Authorization", notionIntToken)
 
@@ -86,21 +68,33 @@ func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor 
 	}
 }
 
-// // GetPageTitle extracts the title of a page from a SearchResult
-// func GetPageTitle(page PageObject) string {
-// 	for key, prop := range page.Properties {
-// 		if prop.Type == "title" {
-// 			// NEED TO MODEL THIS
-// 			return prop["title"][0]["plain_text"]
-// 		}
-// 	}
-// 	return "Untitled"
-// }
+// GetPageSnippet retrieves a notion page's key information: Title, Icon (if available) and URL (if available).
+func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snippets []PageSnippet) {
 
-// -> Iterate over properties -> look for "type": "title"
+	var titleText string
+	arr := make([]PageSnippet, 0)
 
-// // GetDatabases retrives all databases ordered by last edited time
-// func GetDatabases()
+	for _, page := range notionPages {
+		// each page should have only 1 title property
+		for _, propertyValue := range page.Properties {
+			if propertyValue.Type == "title" {
 
-// // SearchPages performs a text search on pages in one's workspace
-// func SearchPages()
+				titleProperty := propertyValue.
+					PropertyData.(TitleProperty).
+					Title
+
+				// Filter blank pages
+				if (len(titleProperty) > 0) && (page.URL != "") {
+					titleText = titleProperty[0].PlainText
+					snippet := PageSnippet{
+						Title: titleText,
+						URL:   page.URL,
+						Icon:  page.Icon.Emoji,
+					}
+					arr = append(arr, snippet)
+				}
+			}
+		}
+	}
+	return arr
+}

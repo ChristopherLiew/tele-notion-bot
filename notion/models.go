@@ -32,15 +32,20 @@ type PageObject struct {
 	Object         string                  `json:"object"`
 	Id             string                  `json:"id"`
 	CreatedTime    string                  `json:"created_time"`
-	CreatedBy      interface{}             `json:"created_by"`
+	CreatedBy      UserObject              `json:"created_by"`
 	LastEditedTime string                  `json:"last_edited_time"`
-	LastEditedBy   interface{}             `json:"last_edited_by"`
+	LastEditedBy   UserObject              `json:"last_edited_by"`
 	Archived       bool                    `json:"archived"`
-	Icon           interface{}             `json:"icon"`
-	Cover          interface{}             `json:"cover"`
+	Icon           EmojiObject             `json:"icon,omitempty"`
+	Cover          interface{}             `json:"cover,omitempty"`
 	Properties     map[string]PageProperty `json:"properties"`
 	Parent         ParentProperty          `json:"parent"`
 	URL            string                  `json:"url"`
+}
+
+type EmojiObject struct {
+	Type  string `json:"type"`
+	Emoji string `json:"emoji"`
 }
 
 type PageProperty struct {
@@ -87,7 +92,7 @@ func (p *PageProperty) UnmarshalJSON(data []byte) (err error) {
 		return
 	}
 
-	// complex types (disgusting but laze, will and must refactor soon)
+	// complex types (disgusting code but laze, will refactor in future)
 	switch p.Type {
 	case "created_by", "last_edited_by":
 		var uo UserObject
@@ -169,13 +174,17 @@ type FileProperty struct {
 }
 
 type FileObjects struct {
-	Name     string           `json:"name"`
-	Type     string           `json:"type"`
-	External string           `json:"external,omitempty"`
-	File     NotionHostedFile `json:"file,omitempty"`
+	Name     string                 `json:"name"`
+	Type     string                 `json:"type"`
+	External ExternalFileObject     `json:"external,omitempty"`
+	File     NotionHostedFileObject `json:"file,omitempty"`
 }
 
-type NotionHostedFile struct {
+type ExternalFileObject struct {
+	URL string `json:"url"`
+}
+
+type NotionHostedFileObject struct {
 	URL        string `json:"url"`
 	ExpiryTime string `json:"expiry_time"`
 }
@@ -359,4 +368,13 @@ type PageSearchResponse struct {
 	HasMore        bool         `json:"has_more"`
 	Type           string       `json:"type"`
 	PageOrDatabase interface{}  `json:"page_or_database"`
+	Status         int          `json:"status,omitempty"`
+	Code           string       `json:"code,omitempty"`
+	Message        string       `json:"message,omitempty"`
+}
+
+type PageSnippet struct {
+	Title string
+	Icon  string // Uses a default icon if nothing
+	URL   string
 }
