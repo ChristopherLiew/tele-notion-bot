@@ -12,17 +12,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func botUpdateHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
+func teleCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
 
 	switch update.Message.Command() {
 	case "start":
-		startCommandHandler(update, bot, slogger)
+		startCommand(update, bot, slogger)
 	case "search":
-		searchCommandHandler(update, bot, cfg, slogger)
+		searchCommand(update, bot, cfg, slogger)
 	case "help":
-		helpCommandHandler(update, bot)
+		helpCommand(update, bot)
 	case "end":
-		endCommandHandler(update, bot, slogger)
+		endCommand(update, bot, slogger)
 	default:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid command 😮!")
 		if _, err := bot.Send(msg); err != nil {
@@ -31,7 +31,7 @@ func botUpdateHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.V
 	}
 }
 
-func startCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *zap.SugaredLogger) {
+func startCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *zap.SugaredLogger) {
 
 	// Start your connection
 	slogger.Infof("Begin authorisation to [%s]'s Notion workspace", update.Message.From.UserName)
@@ -41,7 +41,7 @@ func startCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *
 	bot.Send(msg)
 }
 
-func searchCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
+func searchCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
 
 	getPagesQuery := "pages"
 	getDBQuery := "databases"
@@ -66,33 +66,16 @@ func searchCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *vip
 	if _, err := bot.Send(searchEntryMsg); err != nil {
 		slogger.Error(err.Error())
 	}
-
-	// Get and validate response (Check if callback else exit)
-	updateConfig := tgbotapi.NewUpdate(update.UpdateID + 1)
-	updateConfig.Timeout = 30
-	latestUpdates, err := bot.GetUpdates(updateConfig)
-	if err != nil {
-		slogger.Error(err.Error())
-	}
-	latestResp, hasResp := Last(latestUpdates)
-
-	// Handle search related callbacks
-	if hasResp {
-		handleSearchQuery(latestResp, bot, cfg, slogger)
-	} else {
-		slogger.Fatalw("Unable to obtain latest response from user!")
-	}
 }
 
-func helpCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
+func helpCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	// Provide help and link to any tutorials
 	helpMsg := `
-	Hi there! I only understand the following:
+	Hi there! I can ...
 
-	/start 	- Connect with Notion 🔌
-	/update - Update your Notion connection 🔐
-	/search - Search for Pages & Databases 🔎
-	/end 	- Stop the bot 🛑
+	/start 	- Connect with your Notion workspace 🔗
+	/search - Search for Pages & Databases on it 🔎
+	/end 	- End this conversation 🛑
 
 	See the Menu for all possible commands
 	`
@@ -100,11 +83,16 @@ func helpCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	bot.Send(msg)
 }
 
-func endCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *zap.SugaredLogger) {
+func endCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, slogger *zap.SugaredLogger) {
 
 	userName := update.Message.From.UserName
-	exitMsg := fmt.Sprintf("Good bye! Till next time %s", userName)
+	userId := update.Message.From.ID
+	exitMsg := fmt.Sprintf(
+		`Good bye 👋🏻 Till next time <a href="tg://user?id=%d">@%s</a>!`,
+		userId,
+		userName)
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, exitMsg)
+	msg.ParseMode = "HTML"
 	bot.Send(msg)
 
 	slogger.Infof("Terminating bot for User: %s", userName)

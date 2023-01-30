@@ -11,14 +11,15 @@ import (
 )
 
 // Search
-func handleSearchQuery(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) (err error) {
+
+func teleSearchQueryHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) (err error) {
 
 	notionSecret := cfg.GetString("NOTION.INTEGRATION_SECRET")
 
 	switch update.InlineQuery.Query {
 	case "pages":
 		if err = queryPages(update, bot, notionSecret, slogger); err != nil {
-			slogger.Errorw("callback error: [unable to get pages via notion api]")
+			slogger.Errorw("unable to respond to page query")
 		}
 	case "databases":
 		slogger.Info("Getting databases from user's Notion")
@@ -40,15 +41,18 @@ func queryPages(update tgbotapi.Update, bot *tgbotapi.BotAPI, notionIntToken str
 	snippets := notion.GetPageSnippets(response.Results, slogger)
 
 	// construct inline query results
-	results := make([]tgbotapi.InlineQueryResultArticle, 0)
+	results := make([]interface{}, len(snippets))
 	for i, snippet := range snippets {
-		results = append(
-			results,
-			tgbotapi.NewInlineQueryResultArticle(
-				fmt.Sprintf("%d", i),
-				fmt.Sprintf("%s %s", snippet.Icon, snippet.Title),
-				fmt.Sprintf("Page URL: %s\n", snippet.URL),
-			),
+		results[i] = tgbotapi.NewInlineQueryResultArticleHTML(
+			fmt.Sprintf("%d", i),
+			fmt.Sprintf("%s %s", snippet.Icon, snippet.Title),
+			fmt.Sprintf(
+				`
+				<b>Title</b>: %s %s
+				<b>Link</b>: %s`,
+				snippet.Icon,
+				snippet.Title,
+				snippet.URL),
 		)
 	}
 
@@ -56,7 +60,7 @@ func queryPages(update tgbotapi.Update, bot *tgbotapi.BotAPI, notionIntToken str
 		InlineQueryID: update.InlineQuery.ID,
 		IsPersonal:    true,
 		CacheTime:     0,
-		Results:       []interface{}{results},
+		Results:       results,
 	}
 
 	if _, err := bot.Request(inlineConf); err != nil {

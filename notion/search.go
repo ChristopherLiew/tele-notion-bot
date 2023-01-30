@@ -15,7 +15,7 @@ import (
 // GetAllPages retrieves all notion pages and returns a PageSearchResponse which mirrors the search api endpoint's response body.
 func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor *string, pageSize int) (*PageSearchResponse, error) {
 
-	// Use struct to handle nullable fields (e.g. start cursor)
+	// used struct to handle nullable fields (e.g. start cursor)
 	searchParams := &SearchParams{
 		Sort: &SearchSortObject{
 			Direction: "descending",
@@ -75,7 +75,6 @@ func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snip
 	arr := make([]PageSnippet, 0)
 
 	for _, page := range notionPages {
-		// each page should have only 1 title property
 		for _, propertyValue := range page.Properties {
 			if propertyValue.Type == "title" {
 
@@ -83,7 +82,7 @@ func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snip
 					PropertyData.(TitleProperty).
 					Title
 
-				// Filter blank pages
+				// filter any blank pages
 				if (len(titleProperty) > 0) && (page.URL != "") {
 					titleText = titleProperty[0].PlainText
 					snippet := PageSnippet{

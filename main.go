@@ -10,30 +10,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var TeleNotionBotCommands []tgbotapi.BotCommand
-
-func init() {
-	// bot commands
-	TeleNotionBotCommands = []tgbotapi.BotCommand{
-		{
-			Command:     "start",
-			Description: "Connect with or Update your Notion Account connection",
-		},
-		{
-			Command:     "search",
-			Description: "Search for Pages and Databases on Notion",
-		},
-		{
-			Command:     "help",
-			Description: "At your service",
-		},
-		{
-			Command:     "end",
-			Description: "Stop chatting with moi~",
-		},
-	}
-}
-
 func main() {
 
 	// general configs
@@ -55,7 +31,26 @@ func main() {
 	updateConfig.Timeout = 30
 	updates := bot.GetUpdatesChan(updateConfig)
 
-	botCommands := tgbotapi.NewSetMyCommands(TeleNotionBotCommands...)
+	// bot commands
+	teleNotionBotCommands := []tgbotapi.BotCommand{
+		{
+			Command:     "start",
+			Description: "Connect & Authenticate with Notion 🔗",
+		},
+		{
+			Command:     "search",
+			Description: "Search for Pages & Databases 🔎",
+		},
+		{
+			Command:     "help",
+			Description: "At your service 👋🏻",
+		},
+		{
+			Command:     "end",
+			Description: "Stop the bot 🛑",
+		},
+	}
+	botCommands := tgbotapi.NewSetMyCommands(teleNotionBotCommands...)
 	resp, err := bot.Request(botCommands)
 	if err != nil {
 		sugar.Fatalw(err.Error())
@@ -64,8 +59,12 @@ func main() {
 
 	// process updates
 	for update := range updates {
-		if update.Message.IsCommand() {
-			botUpdateHandler(update, bot, cfg, sugar)
+		if update.InlineQuery != nil {
+			teleSearchQueryHandler(update, bot, cfg, sugar)
+		} else if update.CallbackQuery != nil {
+			continue
+		} else if update.Message.IsCommand() {
+			teleCommandHandler(update, bot, cfg, sugar)
 		} else {
 			continue
 		}
