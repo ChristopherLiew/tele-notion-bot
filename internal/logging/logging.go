@@ -19,6 +19,7 @@ func init() {
 	zapLogger = logger
 }
 
+// GetLogger returns a pointer to the global zap logger.
 func GetLogger() *zap.Logger {
 	return zapLogger
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"tele-notion-bot/notion"
+	"tele-notion-bot/internal/notion"
 	"testing"
 )
 

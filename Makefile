@@ -12,22 +12,16 @@ test_coverage:
 	open ./test/coverage.html
 
 build:
-	go build -o ./bin/main && ./bin/main
-
-compile:
-	echo "Compiling for every OS and Platform"
-	GOOS=linux GOARCH=arm go build -o bin/main-linux-arm main.go
-	GOOS=linux GOARCH=arm64 go build -o bin/main-linux-arm64 main.go
-	GOOS=freebsd GOARCH=386 go build -o bin/main-freebsd-386 main.go
+	cd ./cmd && go build -o ../bin/main && ../bin/main
 
 run:
-	go run ./main.go
+	go run ./cmd/main.go
 
 dep:
 	go mod download
 
 vet:
-	go vet
+	go vet ./...
 
 clean:
 	rm -rf bin

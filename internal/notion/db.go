@@ -1,5 +1,3 @@
-// Refactor to standardise with Search
-
 package notion
 
 import (
@@ -45,7 +43,7 @@ func CreateDatabase(notionSecret string, logger *zap.Logger) (output DatabaseObj
 	return
 }
 
-// GetDatabase retrives a given database's metadata and properties
+// GetDatabase retrieves a given database's metadata and properties
 func GetDatabase(databaseID string, notionSecret string, logger *zap.Logger) (output DatabaseObject) {
 
 	sugar := logger.Sugar()
@@ -81,7 +79,7 @@ func GetDatabase(databaseID string, notionSecret string, logger *zap.Logger) (ou
 }
 
 // QueryDatabase pulls all data found in a given database based on a user defined query
-func QueryDatabase(databaseId string, query string, notionSecret string, logger *zap.Logger) (output DatabaseResponse) {
+func QueryDatabase(databaseId string, query string, notionSecret string, logger *zap.Logger) (output DBSearchResponse) {
 
 	sugar := logger.Sugar()
 	var inputQuery = []byte(query)

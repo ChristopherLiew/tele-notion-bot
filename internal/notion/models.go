@@ -43,17 +43,13 @@ type PageObject struct {
 	URL            string                  `json:"url"`
 }
 
-type EmojiObject struct {
-	Type  string `json:"type"`
-	Emoji string `json:"emoji"`
-}
-
 type PageProperty struct {
 	Id           string      `json:"id"`
 	Type         string      `json:"type"` // 'Enums' not useful since unchecked marshalling is allowed
 	PropertyData interface{} // Can be any type of page property value (E.g. Multi select, Rich text etc.)
 }
 
+// UnmarshalJSON is a custom implementation for handling notion page properties.
 func (p *PageProperty) UnmarshalJSON(data []byte) (err error) {
 
 	// Use new type to prevent infinite recursion
@@ -85,7 +81,7 @@ func (p *PageProperty) UnmarshalJSON(data []byte) (err error) {
 
 	if simpleType[p.Type] {
 		if p.Type == "number" {
-			p.PropertyData = val.(float32)
+			p.PropertyData = val.(float64)
 		} else {
 			p.PropertyData = val
 		}
@@ -193,7 +189,7 @@ type FormulaProperty struct {
 	Type    string  `json:"type"` // enum
 	Boolean bool    `json:"boolean,omitempty"`
 	Date    string  `json:"date,omitempty"`
-	Number  float32 `json:"number,omitempty"`
+	Number  float64 `json:"number,omitempty"`
 	String  string  `json:"string,omitempty"`
 }
 
@@ -300,6 +296,11 @@ type TextObject struct {
 	Link    LinkObject `json:"link,omitempty"`
 }
 
+type EmojiObject struct {
+	Type  string `json:"type"`
+	Emoji string `json:"emoji"`
+}
+
 type ParentProperty struct {
 	Type        string `json:"type"`
 	DatabaseId  string `json:"database_id,omitempty"`
@@ -310,35 +311,24 @@ type ParentProperty struct {
 
 // Databases
 
-type DatabaseResponse struct {
-	Object         string        `json:"object"`
-	Results        []interface{} `json:"results"`
-	NextCursor     string        `json:"next_cursor"`
-	HasMore        bool          `json:"has_more"`
-	Type           string        `json:"type"`
-	Page           interface{}   `json:"page"`
-	RequestStatus  int           `json:"status"` // Think of a better way to handle this
-	RequestMessage string        `json:"message"`
-}
-
 type DatabaseObject struct {
-	Object         string           `json:"object"`
-	Id             string           `json:"id"`
-	CreatedTime    string           `json:"created_time"`
-	CreatedBy      interface{}      `json:"created_by"`
-	LastEditedTime string           `json:"last_edited_time"`
-	LastEditedBy   interface{}      `json:"last_edited_by"`
-	Title          interface{}      `json:"title"`
-	Description    []RichTextObject `json:"description"`
-	Icon           interface{}      `json:"icon"`
-	Cover          interface{}      `json:"cover"`
-	Properties     interface{}      `json:"properties"`
-	Parent         interface{}      `json:"parent"`
-	Url            string           `json:"url"`
-	Archived       bool             `json:"archived"`
-	IsInline       bool             `json:"is_inline"`
-	RequestStatus  int              `json:"status"` // Think of a better way to handle this
-	RequestMessage string           `json:"message"`
+	Object         string                 `json:"object"`
+	Id             string                 `json:"id"`
+	CreatedTime    string                 `json:"created_time"`
+	CreatedBy      UserObject             `json:"created_by"`
+	LastEditedTime string                 `json:"last_edited_time"`
+	LastEditedBy   UserObject             `json:"last_edited_by"`
+	Title          []RichTextObject       `json:"title"`
+	Description    []RichTextObject       `json:"description"`
+	Icon           EmojiObject            `json:"icon"`
+	Cover          interface{}            `json:"cover"`
+	Properties     map[string]interface{} `json:"properties"`
+	Parent         ParentProperty         `json:"parent"`
+	URL            string                 `json:"url"`
+	Archived       bool                   `json:"archived"`
+	IsInline       bool                   `json:"is_inline"`
+	RequestStatus  int                    `json:"status"` // Think of a better way to handle this
+	RequestMessage string                 `json:"message"`
 }
 
 // Search
@@ -373,8 +363,22 @@ type PageSearchResponse struct {
 	Message        string       `json:"message,omitempty"`
 }
 
+type DBSearchResponse struct {
+	Object         string           `json:"object"`
+	Results        []DatabaseObject `json:"results"`
+	NextCursor     string           `json:"next_cursor"`
+	HasMore        bool             `json:"has_more"`
+	Type           string           `json:"type"`
+	PageOrDatabase interface{}      `json:"page_or_database"`
+	Status         int              `json:"status"`
+	Code           string           `json:"code"`
+	Message        string           `json:"message"`
+}
+
+// Telegram
+
 type PageSnippet struct {
 	Title string
-	Icon  string // Uses a default icon if nothing
+	Icon  string
 	URL   string
 }

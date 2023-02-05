@@ -5,10 +5,11 @@
 *.so
 *.dylib
 
+# OSX
+*.DS_Store
+
 # Test binary, built with `go test -c`
 *.test
-
-# Test data
 test/data
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -21,4 +22,4 @@ test/data
 config/config.yaml
 
 # Binaries
-bin/*
+bin

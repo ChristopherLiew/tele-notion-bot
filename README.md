@@ -1,5 +1,17 @@
 # Telegram Notion Bot
 
+<p style="text-align:center;">
+    <img src="img/tele-notion-bot-logo-landscape.png" alt="drawing" width="250"/>
+</p>
+
 ## Introduction
 
-`Work in Progress` Telegram bot that enables users to access and update Notion objects like `Pages`, `Databases` and `Blocks`.
+Telegram bot that enables users to access and update `Notion Workspace` items like `Pages`, `Databases` and `Blocks` from within Telegram. Bot can be found ***@tele_notion_bot*** 🚀.
+
+## Bot Usage Snippets
+
+***Note: This project is still a work in progress as such functionality may (will) change. Also, Bot is still in development and testing locally.***
+
+### Searching for Pages
+
+### Searching for Databases

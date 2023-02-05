@@ -1,11 +1,9 @@
-// REFACTOR UPDATES cannot be nested since it conflict with the main instance
-// Revert back to UPDATE TYPE
-
 package main
 
 import (
-	"tele-notion-bot/config"
-	"tele-notion-bot/logging"
+	"tele-notion-bot/internal/config"
+	"tele-notion-bot/internal/logging"
+	"tele-notion-bot/internal/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -28,7 +26,7 @@ func main() {
 
 	// bot configs
 	updateConfig := tgbotapi.NewUpdate(0)
-	updateConfig.Timeout = 30
+	updateConfig.Timeout = 60
 	updates := bot.GetUpdatesChan(updateConfig)
 
 	// bot commands
@@ -51,20 +49,20 @@ func main() {
 		},
 	}
 	botCommands := tgbotapi.NewSetMyCommands(teleNotionBotCommands...)
-	resp, err := bot.Request(botCommands)
+	_, err = bot.Request(botCommands)
 	if err != nil {
 		sugar.Fatalw(err.Error())
 	}
-	sugar.Infof("Bot commands have been set with response: %b", resp.Ok)
+	sugar.Infof("Bot commands have been set")
 
 	// process updates
 	for update := range updates {
 		if update.InlineQuery != nil {
-			teleSearchQueryHandler(update, bot, cfg, sugar)
+			telegram.TeleSearchQueryHandler(update, bot, cfg, sugar)
 		} else if update.CallbackQuery != nil {
 			continue
 		} else if update.Message.IsCommand() {
-			teleCommandHandler(update, bot, cfg, sugar)
+			telegram.TeleCommandHandler(update, bot, cfg, sugar)
 		} else {
 			continue
 		}

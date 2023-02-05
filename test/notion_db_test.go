@@ -1,11 +1,11 @@
-// Create more advanced test cases with a test DB on notion
+// TODO: Refactor once db.go functionality has been completed
 
 package test
 
 import (
 	"testing"
 
-	"tele-notion-bot/notion"
+	"tele-notion-bot/internal/notion"
 )
 
 func TestGetNotionDatabase(t *testing.T) {
@@ -45,8 +45,8 @@ func TestQueryDatabase(t *testing.T) {
 		Logger,
 	)
 
-	if res.RequestStatus != 0 { // Change to cover more error codes
-		t.Errorf("Request returned status %d with messsage:\n%s", res.RequestStatus, res.RequestMessage)
+	if res.Status != 0 { // Change to cover more error codes
+		t.Errorf("Request returned status %d with messsage:\n%s", res.Status, res.Message)
 	}
 }
 
@@ -60,7 +60,7 @@ func TestQueryDatabaseWrongSecret(t *testing.T) {
 		Logger,
 	)
 
-	if res.RequestStatus != 401 {
+	if res.Status != 401 {
 		t.Error("Request did not return 401 Token Invalid Error")
 	}
 

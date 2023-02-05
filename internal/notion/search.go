@@ -1,5 +1,3 @@
-// Search contains all search related functionality for Notion
-// objects like Pages and Databases
 package notion
 
 import (
@@ -12,17 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetAllPages retrieves all notion pages and returns a PageSearchResponse which mirrors the search api endpoint's response body.
-func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor *string, pageSize int) (*PageSearchResponse, error) {
+func searchAPICall(notionIntToken string, slogger *zap.SugaredLogger, pageOrDB string, startCursor *string, pageSize int) []byte {
 
-	// used struct to handle nullable fields (e.g. start cursor)
 	searchParams := &SearchParams{
 		Sort: &SearchSortObject{
 			Direction: "descending",
 			Timestamp: "last_edited_time",
 		},
 		Filter: &SearchFilterObject{
-			Value:    "page",
+			Value:    pageOrDB,
 			Property: "object",
 		},
 		StartCursor: startCursor,
@@ -44,30 +40,37 @@ func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor 
 	req.Header.Add("Authorization", notionIntToken)
 
 	res, err := http.DefaultClient.Do(req)
-	if err != nil {
+	isFailedRequest := res.StatusCode != 200
+	if (err != nil) || isFailedRequest {
 		slogger.Errorw(err.Error())
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode == 200 {
-
-		var response PageSearchResponse
-
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			slogger.Errorw(err.Error())
-		}
-
-		if err := json.Unmarshal(body, &response); err != nil {
-			slogger.Errorw(err.Error())
-		}
-
-		return &response, nil
-	} else {
-		return nil, fmt.Errorf("invalid search response with status: [%s]", res.Status)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		slogger.Errorw(err.Error())
 	}
+
+	return body
 }
 
+func GetAllPages(notionIntToken string, slogger *zap.SugaredLogger, startCursor *string, pageSize int) (*PageSearchResponse, error) {
+
+	var response PageSearchResponse
+
+	body := searchAPICall(
+		notionIntToken,
+		slogger,
+		"page",
+		startCursor,
+		pageSize,
+	)
+	err := json.Unmarshal(body, &response)
+
+	return &response, err
+}
+
+// Turn this into go routine
 // GetPageSnippet retrieves a notion page's key information: Title, Icon (if available) and URL (if available).
 func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snippets []PageSnippet) {
 
@@ -83,7 +86,10 @@ func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snip
 					Title
 
 				// filter any blank pages
-				if (len(titleProperty) > 0) && (page.URL != "") {
+				hasTitle := len(titleProperty) > 0
+				hasURL := page.URL != ""
+
+				if hasTitle && hasURL {
 					titleText = titleProperty[0].PlainText
 					snippet := PageSnippet{
 						Title: titleText,
@@ -96,4 +102,21 @@ func GetPageSnippets(notionPages []PageObject, slogger *zap.SugaredLogger) (snip
 		}
 	}
 	return arr
+}
+
+func GetAllDBs(notionIntToken string, slogger *zap.SugaredLogger, startCursor *string, pageSize int) (*DBSearchResponse, error) {
+
+	var response DBSearchResponse
+
+	body := searchAPICall(
+		notionIntToken,
+		slogger,
+		"database",
+		startCursor,
+		pageSize,
+	)
+	err := json.Unmarshal(body, &response)
+
+	return &response, err
+
 }

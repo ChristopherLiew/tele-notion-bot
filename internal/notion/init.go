@@ -1,8 +1,8 @@
-// Refactor this 'abuse' in the future:
+// TODO: Remove this (see ref below)
 // https://leighmcculloch.com/posts/tool-go-check-no-globals-no-inits/
 package notion
 
-import "tele-notion-bot/config"
+import "tele-notion-bot/internal/config"
 
 var ApiRoot string
 var ApiVersion string

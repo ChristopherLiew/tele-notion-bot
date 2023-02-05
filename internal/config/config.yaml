@@ -1,0 +1,20 @@
+TELEGRAM:
+  BOT_NAME: "NotionBot"
+  BOT_USERNAME: "tele_notion_bot"
+  BOT_TOKEN: "5800858899:AAEXlziwb3rdz_EFUBPB3xPfn3S5wKFghx0"
+  BOT_URL: "https://t.me/tele_notion_bot"
+  TEST_BOT_NAME: "TestNotionBot"
+  TEST_BOT_USERNAME: "test_tele_notion_bot"
+  TEST_BOT_TOKEN: "5894822568:AAFWRwYzzE0njUAxJvj9Lcr-Wa-jOwVREoA"
+  TEST_BOT_URL: "https://t.me/test_tele_notion_bot"
+
+NOTION:
+  API_VERSION: "2022-06-28"
+  API_ROOT: "https://api.notion.com/v1" # Internal Integration
+  INTEGRATION_SECRET: "secret_E9VmBfr8fF8hUr7LcAbz2grgAv0ri0lGPyOLitQLFF2"
+  TEST_PAGE_ID: "2301bc16d18d4341b37489b3f9a5eb0e"
+  TEST_DB_ID: "36cb45ade2954938af542afa20b00af7"
+  AUTH_CLIENT_ID: "964137c7-8a77-4903-8803-e8dc031b78fd"
+  AUTH_CLIENT_SECRET: "secret_ocNIapBj4aOTsT3HkG5E9LGKiEZGgH49dHtnbmOsKLV"
+  AUTH_REDIRECT_URI: "http://localhost:8080/auth/callback"
+  AUTHORIZATION_URL: "https://api.notion.com/v1/oauth/authorize?client_id=964137c7-8a77-4903-8803-e8dc031b78fd&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fcallback"
