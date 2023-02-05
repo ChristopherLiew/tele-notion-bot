@@ -19,7 +19,7 @@ test/data
 # vendor/
 
 # Secrets & Configs
-config/config.yaml
+internal/config/config.yaml
 
 # Binaries
 bin
