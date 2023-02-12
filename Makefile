@@ -24,6 +24,7 @@ vet:
 	go vet ./...
 
 clean:
+	go mod tidy -v
 	rm -rf bin
 	rm -rf ./test/coverage.*
 

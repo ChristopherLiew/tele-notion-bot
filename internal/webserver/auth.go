@@ -1,9 +1,6 @@
-// TODO:
-// 1) Complete testing with toml file first (delete our existing cred and test workflow)
-// 2) Set up sqlite to store authentication tokens
-// 3) Refactor search functionality to check for auth
+// TODO: Debug why cannot get auth token
 
-package notion
+package webserver
 
 import (
 	"encoding/json"
@@ -12,7 +9,10 @@ import (
 	"net/http"
 	"strings"
 	"tele-notion-bot/internal/config"
+	"tele-notion-bot/internal/database"
 	"tele-notion-bot/internal/logging"
+	"tele-notion-bot/internal/notion"
+	"tele-notion-bot/internal/telegram"
 
 	"go.uber.org/zap"
 )
@@ -43,6 +43,9 @@ func AuthServer() (server *http.Server) {
 		}
 	}()
 
+	// Handle server closure
+	// server.Shutdown(context.Background())
+
 	return
 }
 
@@ -50,13 +53,14 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 
 	var htmlIndex = `<html>
 		<body>
-			<p>Testing the Tele Notion Test Bot :)</p>
+			<p>Welcome to the Notion Telegram Bot :)</p>
 		</body>
 		</html>`
 
 	fmt.Fprint(w, htmlIndex)
 }
 
+// TODO: Store token with teleusername to database
 func handleNotionAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	cfg := config.GetConfig()
@@ -81,6 +85,8 @@ func handleNotionAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slogger.Infof("Access token successfully retrieved: %v", *accessToken)
+	database.AddNotionUser(telegram.TeleUserName, *accessToken)
+
 	slogger.Infof("OAuth2 workflow completed. Redirecting user back to telegram")
 
 	// redirect to tele notion bot
@@ -91,7 +97,7 @@ func GetNotionAccessToken(state string, code string, clientId string, clientSecr
 
 	slogger.Info("Retrieving access token")
 
-	url := fmt.Sprintf("%s/oauth/token", ApiRoot)
+	url := fmt.Sprintf("%s/oauth/token", notion.ApiRoot)
 	payload := strings.NewReader(fmt.Sprintf(`{
 		"grant_type": "authorization_code",
 		"code": "%s",
@@ -101,7 +107,7 @@ func GetNotionAccessToken(state string, code string, clientId string, clientSecr
 	authorization := fmt.Sprintf(`Basic "%s:%s"`, clientId, clientSecret)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", ApiVersion)
+	req.Header.Add("Notion-Version", notion.ApiVersion)
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("Authorization", authorization)
 
