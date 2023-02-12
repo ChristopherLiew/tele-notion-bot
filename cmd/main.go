@@ -4,6 +4,7 @@ import (
 	"tele-notion-bot/internal/config"
 	"tele-notion-bot/internal/logging"
 	"tele-notion-bot/internal/telegram"
+	"tele-notion-bot/internal/webserver"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -54,6 +55,9 @@ func main() {
 		sugar.Fatalw(err.Error())
 	}
 	sugar.Infof("Bot commands have been set")
+
+	// start webserver
+	go webserver.AuthServer()
 
 	// process updates
 	for update := range updates {

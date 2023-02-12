@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	"tele-notion-bot/internal/database"
 	"tele-notion-bot/internal/notion"
 )
 
@@ -15,13 +16,17 @@ import (
 // teleSearchQueryHandler handles all notion search related inline queries such as page and database search.
 func TeleSearchQueryHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) (err error) {
 
-	notionSecret := cfg.GetString("NOTION.INTEGRATION_SECRET")
+	// Get notion auth token
+	user := database.GetNotionUser(update.Message.From.UserName)
+	if err != nil {
+		slogger.Error(err.Error())
+	}
 
 	switch update.InlineQuery.Query {
 	case "pages":
-		err = queryPages(update, bot, notionSecret, slogger, 50)
+		err = queryPages(update, bot, user.Token, slogger, 50)
 	case "databases":
-		err = queryDBs(update, bot, notionSecret, slogger, 50)
+		err = queryDBs(update, bot, user.Token, slogger, 50)
 	default:
 		err = fmt.Errorf("unknown callback: [%s]", update.CallbackQuery.Data)
 	}

@@ -2,12 +2,14 @@ package telegram
 
 import (
 	"fmt"
-	"tele-notion-bot/internal/notion"
+	"tele-notion-bot/internal/database"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
+
+var TeleUserName string
 
 // teleCommandHandler handles all telegram commands from the user.
 func TeleCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
@@ -33,7 +35,8 @@ func TeleCommandHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper
 func startCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) {
 
 	// Start your connection
-	slogger.Infof("Begin authorisation to %s's notion workspace", update.Message.From.UserName)
+	TeleUserName = update.Message.From.UserName
+	slogger.Infof("Begin authorisation to %s's notion workspace", TeleUserName)
 
 	authURL := cfg.GetString("NOTION.AUTHORIZATION_URL")
 	authKeyboard := tgbotapi.NewInlineKeyboardMarkup(
@@ -44,18 +47,31 @@ func startCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper
 			},
 		),
 	)
-	authMsg := tgbotapi.NewMessage(
-		update.Message.Chat.ID,
-		"Welcome to NotionBot 😊\nLet's start by connecting your Workspace!",
-	)
-	authMsg.ReplyMarkup = authKeyboard
 
-	if _, err := bot.Send(authMsg); err != nil {
-		slogger.Error(err.Error())
+	// check if user with key exists else proceed with oauth2
+	database.InitNotionUserDB()
+	user := database.GetNotionUser(TeleUserName)
+
+	if user.UserName == "" {
+		slogger.Infof("%s not previously authenticated, starting OAuth2 auth flow", TeleUserName)
+		authMsg := tgbotapi.NewMessage(
+			update.Message.Chat.ID,
+			"Welcome to NotionBot 😊\nLet's start by connecting your Workspace!",
+		)
+		authMsg.ReplyMarkup = authKeyboard
+		if _, err := bot.Send(authMsg); err != nil {
+			slogger.Error(err.Error())
+		}
+	} else {
+		slogger.Infof("User previously authenticated as %s at timestamp: %s", user.UserName, user.Timestamp)
+		completeAuthMsg := tgbotapi.NewMessage(
+			update.Message.Chat.ID,
+			"Welcome to NotionBot 😊\nYou are already authenticated!",
+		)
+		if _, err := bot.Send(completeAuthMsg); err != nil {
+			slogger.Error(err.Error())
+		}
 	}
-
-	// oauth2 workflow
-	notion.AuthServer()
 }
 
 // searchCommand serves as the entrypoint to a user's notion search request.
