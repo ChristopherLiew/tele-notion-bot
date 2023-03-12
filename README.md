@@ -12,6 +12,15 @@ Telegram bot that enables users to access and update `Notion Workspace` items li
 
 ***Note: This project is still a work in progress as such functionality may (will) change. Also, Bot is still in development and testing locally.***
 
-### Searching for Pages
+### Start and Authenticate with Notion Workspace
 
-### Searching for Databases
+```sh
+/start > Authenticate Notion 🔑
+```
+
+### Searching for Pages & Databases
+
+```sh
+/search > Get Pages 📝
+/search > Get Databases 💾
+```
