@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// session variables (think of how to better cache / store these?)
 var TeleUserName string
 
 // teleCommandHandler handles all telegram commands from the user.
@@ -49,9 +50,7 @@ func startCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper
 	)
 
 	// check if user with key exists else proceed with oauth2
-	database.InitNotionUserDB()
 	user := database.GetNotionUser(TeleUserName)
-
 	if user.UserName == "" {
 		slogger.Infof("%s not previously authenticated, starting OAuth2 auth flow", TeleUserName)
 		authMsg := tgbotapi.NewMessage(
@@ -66,7 +65,7 @@ func startCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper
 		slogger.Infof("User previously authenticated as %s at timestamp: %s", user.UserName, user.Timestamp)
 		completeAuthMsg := tgbotapi.NewMessage(
 			update.Message.Chat.ID,
-			"Welcome to NotionBot 😊\nYou are already authenticated!",
+			"Welcome to NotionBot 😊\nYou have already authenticated!",
 		)
 		if _, err := bot.Send(completeAuthMsg); err != nil {
 			slogger.Error(err.Error())
@@ -79,6 +78,19 @@ func searchCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Vipe
 
 	getPagesQuery := "pages"
 	getDBQuery := "databases"
+
+	user := database.GetNotionUser(TeleUserName)
+	if user.UserName == "" {
+		slogger.Infof("%s not previously authenticated, starting OAuth2 auth flow", TeleUserName)
+		authMsg := tgbotapi.NewMessage(
+			update.Message.Chat.ID,
+			"Please hit /start and authenticate your Notion Workspace",
+		)
+		if _, err := bot.Send(authMsg); err != nil {
+			slogger.Error(err.Error())
+		}
+		return
+	}
 
 	searchCommandKeyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(

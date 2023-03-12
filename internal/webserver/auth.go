@@ -1,31 +1,16 @@
-// TODO: Debug why cannot get auth token
-
 package webserver
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"tele-notion-bot/internal/config"
 	"tele-notion-bot/internal/database"
 	"tele-notion-bot/internal/logging"
-	"tele-notion-bot/internal/notion"
 	"tele-notion-bot/internal/telegram"
 
-	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 )
-
-type NotionExchangeResponse struct {
-	AccessToken          string `json:"access_token"`
-	BotId                string `json:"bot_id"`
-	DuplicatedTemplateId string `json:"duplicated_template_id"`
-	Owner                string `json:"owner"`
-	WorkspaceIcon        string `json:"workspace_icon"`
-	WorkspaceId          string `json:"workspace_id"`
-	WorkspaceName        string `json:"workspace_name"`
-}
 
 func AuthServer() (server *http.Server) {
 
@@ -60,72 +45,32 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, htmlIndex)
 }
 
-// TODO: Store token with teleusername to database
 func handleNotionAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	cfg := config.GetConfig()
 	slogger := logging.GetLogger().Sugar()
 
-	state := r.FormValue("state")
 	code := r.FormValue("code")
+	conf := &oauth2.Config{
+		ClientID:     cfg.GetString("NOTION.AUTH_CLIENT_ID"),
+		ClientSecret: cfg.GetString("NOTION.AUTH_CLIENT_SECRET"),
+		RedirectURL:  cfg.GetString("NOTION.PUB_INTEGRATION_REDIRECT_URI"),
+		Scopes:       []string{"all"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://api.notion.com/v1/oauth/authorize",
+			TokenURL: "https://api.notion.com/v1/oauth/token",
+		},
+	}
 
-	slogger.Infof("Obtained code from notion oauth callback: %s", code)
-
-	accessToken, err := GetNotionAccessToken(
-		state,
-		code,
-		cfg.GetString("NOTION.AUTH_CLIENT_ID"),
-		cfg.GetString("NOTION.AUTH_CLIENT_SECRET"),
-		slogger,
-	)
+	token, err := conf.Exchange(context.Background(), code)
 	if err != nil {
-		slogger.Error(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		slogger.Errorf("Unable to exchange authorization code for token: %v", err)
+		// pass error as a message to user
+		http.Redirect(w, r, cfg.GetString("TELEGRAM.TEST_BOT_URL"), http.StatusTemporaryRedirect)
 		return
 	}
 
-	slogger.Infof("Access token successfully retrieved: %v", *accessToken)
-	database.AddNotionUser(telegram.TeleUserName, *accessToken)
-
+	database.AddNotionUser(telegram.TeleUserName, token.AccessToken)
 	slogger.Infof("OAuth2 workflow completed. Redirecting user back to telegram")
-
-	// redirect to tele notion bot
 	http.Redirect(w, r, cfg.GetString("TELEGRAM.TEST_BOT_URL"), http.StatusSeeOther)
-}
-
-func GetNotionAccessToken(state string, code string, clientId string, clientSecret string, slogger *zap.SugaredLogger) (accessToken *string, err error) {
-
-	slogger.Info("Retrieving access token")
-
-	url := fmt.Sprintf("%s/oauth/token", notion.ApiRoot)
-	payload := strings.NewReader(fmt.Sprintf(`{
-		"grant_type": "authorization_code",
-		"code": "%s",
-		"redirect_uri": "%s"
-	}`, code, "http://localhost:8080/auth/callback"))
-	req, _ := http.NewRequest("POST", url, payload)
-	authorization := fmt.Sprintf(`Basic "%s:%s"`, clientId, clientSecret)
-
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Notion-Version", notion.ApiVersion)
-	req.Header.Add("content-type", "application/json")
-	req.Header.Add("Authorization", authorization)
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		slogger.Errorf("Failed to retrieve access token: %s", err.Error())
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		slogger.Error(err.Error())
-		return nil, err
-	}
-
-	var accessResponse NotionExchangeResponse
-	err = json.Unmarshal(body, &accessResponse)
-
-	return &accessResponse.AccessToken, err
 }

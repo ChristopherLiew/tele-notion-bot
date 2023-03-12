@@ -1,7 +1,12 @@
+// TODO:
+// 3) Handle errors in authentication
+// 4) Graceful shutdown of webserver
+
 package main
 
 import (
 	"tele-notion-bot/internal/config"
+	"tele-notion-bot/internal/database"
 	"tele-notion-bot/internal/logging"
 	"tele-notion-bot/internal/telegram"
 	"tele-notion-bot/internal/webserver"
@@ -56,8 +61,9 @@ func main() {
 	}
 	sugar.Infof("Bot commands have been set")
 
-	// start webserver
+	// start webserver & user database
 	go webserver.AuthServer()
+	database.InitNotionUserDB()
 
 	// process updates
 	for update := range updates {

@@ -16,10 +16,9 @@ import (
 // teleSearchQueryHandler handles all notion search related inline queries such as page and database search.
 func TeleSearchQueryHandler(update tgbotapi.Update, bot *tgbotapi.BotAPI, cfg *viper.Viper, slogger *zap.SugaredLogger) (err error) {
 
-	// Get notion auth token
-	user := database.GetNotionUser(update.Message.From.UserName)
-	if err != nil {
-		slogger.Error(err.Error())
+	user := database.GetNotionUser(TeleUserName)
+	if user.Token == "" {
+		slogger.Errorf("User not authenticated")
 	}
 
 	switch update.InlineQuery.Query {
@@ -52,8 +51,7 @@ func queryPages(update tgbotapi.Update, bot *tgbotapi.BotAPI, notionIntToken str
 			fmt.Sprintf("%s %s", snippet.Icon, snippet.Title),
 			fmt.Sprintf(`
 				<b>Page</b>: %s %s
-				<b>Link</b>: %s`,
-				snippet.Icon, snippet.Title, snippet.URL),
+				%s`, snippet.Icon, snippet.Title, snippet.URL),
 		)
 	}
 
@@ -99,12 +97,10 @@ func queryDBs(update tgbotapi.Update, bot *tgbotapi.BotAPI, notionIntToken strin
 		}
 		url := db.URL
 
-		results[i] = tgbotapi.NewInlineQueryResultArticleHTML(
+		results[i] = tgbotapi.NewInlineQueryResultArticleMarkdownV2(
 			fmt.Sprintf("%d", i),
 			fmt.Sprintf("%s %s", icon, title),
-			fmt.Sprintf(`
-				<b>Database</b>: %s %s
-				<b>Link</b>: %s`, icon, title, url),
+			fmt.Sprintf("*Database*: %s [%s](%s)", icon, title, url),
 		)
 	}
 

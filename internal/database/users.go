@@ -33,7 +33,10 @@ func AddNotionUser(teleHandle string, token string) {
 
 	db := sqlx.MustConnect("sqlite3", "file::memory:?cache=shared")
 
-	notionUser := `INSERT INTO users (username, token, timestamp) VALUES (?, ?, ?)`
+	notionUser := `
+		INSERT INTO users (username, token, timestamp)
+		VALUES (?, ?, ?)
+	`
 	authTimeStamp := time.Now().Format("01-02-2023 15:15:15")
 
 	db.MustExec(notionUser, teleHandle, token, authTimeStamp)

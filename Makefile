@@ -12,7 +12,7 @@ test_coverage:
 	open ./test/coverage.html
 
 build:
-	cd ./cmd && go build -o ../bin/main && ../bin/main
+	cd ./cmd && go build -o ../bin/main
 
 run:
 	go run ./cmd/main.go
